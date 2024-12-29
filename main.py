@@ -1,42 +1,47 @@
-import os
-from flask import Flask
+from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
+app.secret_key = '111111111111'  # Replace with a secure key
+
+# Dummy user data for demonstration
+users = {
+    'admin': 'admin',
+    'user': 'user'
+}
 
 @app.route('/')
-def hello():
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Hello Page</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-                margin: 0;
-                background: linear-gradient(135deg, #f06, #4a90e2);
-                color: white;
-                text-align: center;
-            }
-            h1 {
-                font-size: 4em;
-                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            }
-        </style>
-    </head>
-    <body>
-        <h1>Hello</h1>
-    </body>
-    </html>
-    """
+def home():
+    if 'username' in session:
+        return f"Hello, {session['username']}! <br><a href='/logout'>Logout</a>"
+    return "<a href='/login'>Login</a>"
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # Check if the username exists and the password matches
+        if username in users and users[username] == password:
+            session['username'] = username
+            return redirect(url_for('home'))
+        else:
+            return "Invalid credentials! Please try again.<br><a href='/login'>Login</a>"
+
+    return '''
+        <form method="POST">
+            Username: <input type="text" name="username"><br>
+            Password: <input type="password" name="password"><br>
+            <input type="submit" value="Login">
+        </form>
+    '''
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return redirect(url_for('home'))
 
 if __name__ == '__main__':
-    # Get the PORT from environment variables or default to 5000
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True)
+
+
