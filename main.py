@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template_string, request, redirect, url_for, session
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Replace with a secure key
@@ -9,36 +9,7 @@ users = {
     'user': 'userpass'
 }
 
-@app.route('/')
-def home():
-    if 'username' in session:
-        return f"Hello, {session['username']}! <br><a href='/logout'>Logout</a>"
-    return "<a href='/login'>Login</a>"
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        # Check if the username exists and the password matches
-        if username in users and users[username] == password:
-            session['username'] = username
-            return redirect(url_for('home'))
-        else:
-            return render_template('login.html', error="Invalid credentials! Please try again.")
-
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    return redirect(url_for('home'))
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
-# login.html
+HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,3 +74,34 @@ if __name__ == '__main__':
     </div>
 </body>
 </html>
+"""
+
+@app.route('/')
+def home():
+    if 'username' in session:
+        return f"Hello, {session['username']}! <br><a href='/logout'>Logout</a>"
+    return "<a href='/login'>Login</a>"
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # Check if the username exists and the password matches
+        if username in users and users[username] == password:
+            session['username'] = username
+            return redirect(url_for('home'))
+        else:
+            error = "Invalid credentials! Please try again."
+
+    return render_template_string(HTML_TEMPLATE, error=error)
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return redirect(url_for('home'))
+
+if __name__ == '__main__':
+    app.run(debug=True)
